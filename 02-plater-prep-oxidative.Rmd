@@ -1,0 +1,190 @@
+---
+title: "Pre-Process Data from Plate Reader: Oxidative Enzymes (PO & PER)"
+subtitle: "Automating the creation of CSV templates for use with the plater package"
+author: "Hava Blair"
+date: "July 2, 2020"
+output:
+  pdf_document: 
+    toc: true 
+    number_sections: true
+  html_document: default
+---
+\newpage
+
+# Before you start 
+
+### About `plater`
+
+The R package `plater` provides helpful functions for transforming data from plate experiments into "tidy" format for analysis.  You can read more about the plater package here: (https://docs.ropensci.org/plater/).   
+
+A pre-requisite for using the `plater` functions is getting your plate data in the correct format.  `plater` has an excellent vignette that walks through some examples of data formatting and `plater` functions step-by-step: https://cran.r-project.org/web/packages/plater/vignettes/plater-basics.html 
+
+### Purpose of this R Markdown 
+
+If you have many plates worth of data to process, it can take some time and effort to manually create templates for each plate.  In my experience, the process of opening multiple excel files and copy / pasting the data was tedious and easy to mess up if I wasn't paying attention to my clipboard and file names. 
+
+**This script lends a hand by automating the process of preparing micorplate data stored in multiple excel files into the proper format for `plater` functions.**
+
+The script was written to ingest an arbitrary number of excel files with multiple worksheets (tabs) in each file.  It will also work for files with only 1 worksheet.  
+
+### What you need 
+
+- Data exported from the plate reader software (this script assumes .xlsx). The name of each tab should be a plate number or identifier, and each one should be unique.  **Make sure that your "B" plate name includes the text "plate_b"**
+- Your plate layouts (map of sample names, blanks, checks on each plate)
+- Your lab notebook or notes with information about any known pipetting errors or plate issues that should be flagged for quality control ("Bad Wells")
+- A generic plate template.  Templates are available in the `empty_templates` sub-directory for the hydrolytic and oxidative extracellular enzyme assays regularly performed in the Gutknecht lab.  If you need to create your own template, see Step 1 in this tutorial for `plater`'s formatting requirements:  https://cran.r-project.org/web/packages/plater/vignettes/plater-basics.html
+\newpage
+
+# Setup
+
+If you do not already have the packages below installed in R, you may need to install them first.  
+
+```{r setup, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(tidy = TRUE)
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff=60))
+
+library(tidyverse)
+library(readxl)
+library(glue)
+
+```
+
+# Read in excel files 
+
+You can have as many sheets (tabs) as you want in each excel file.  Place all the excel files you want to process in the `raw_excel` sub-directory.  Do not place additional files in this sub-directory. 
+
+```{r read}
+#fill in directory (folder) where your raw excel files are
+xl_files <- dir("./raw_excel_oxidative/")
+
+# save full file path to each of your excel files
+xl_paths <- paste0("./raw_excel_oxidative/", xl_files)
+
+# function to create dataframe with col for filepath and col for sheetnames. Each row in this dataframe represents a single "sheet" (tab) from your raw excel file. You will get one dataframe per excel file in your original list.
+# sheet col specified as "character" so bind_rows() below doesn't complain about unequal factor levels. 
+make_df <- function(file_path){
+df <- data.frame(sheet = excel_sheets(path = file_path))
+df$path = file_path
+df$sheet <- as.character(df$sheet)
+df
+}
+
+# apply make_df to every excel file you want to process
+# creates list of dfs
+sheets_list <- map(xl_paths, make_df)
+
+``` 
+
+
+# Create a dataframe of file paths and sheet names 
+
+We will build a simple dataframe.  Each row will contain the file paths for our excel files and sheet names for each sheet we want to turn into a plater template.  
+
+```{r file-sheet-list, message=FALSE}
+
+# bind list of dfs together into a single df:
+# path is first col, sheets second col
+sheets_path_df <- bind_rows(sheets_list) 
+sheets_path_df <- sheets_path_df %>% select(path, sheet)
+
+```
+
+
+# Extract the fluorescence data from your excel files
+
+The plate reader includes extra metadata and formatting junk in the exported worksheets.  The function below extracts just the rectangle containing the data including column and row names. 
+
+```{r extract-data, message=FALSE}
+# function to read only fluorescence data from each sheet in every excel file
+
+read_sheets <- function(path, sheet){
+  
+  raw_data <- read_excel(path = path, sheet = sheet, range = "B23:N31")
+  raw_data %>%  
+    rename(Template = ...1) %>% 
+    mutate(`1` = as.character(`1`),
+           `2` = as.character(`2`),
+           `3` = as.character(`3`),
+           `4` = as.character(`4`),
+           `5` = as.character(`5`),
+           `6` = as.character(`6`),
+           `7` = as.character(`7`),
+           `8` = as.character(`8`),
+           `9` = as.character(`9`), 
+           `10` = as.character(`10`), 
+           `11` = as.character(`11`), 
+           `12` = as.character(`12`))
+}
+
+# save the fluor data as a list column 
+fluor_import <- sheets_path_df %>% 
+  mutate(fluor_data = pmap(sheets_path_df, read_sheets))
+
+```
+
+# Create plater templates
+
+This section of the code reads in a template from the empty_templates sub-directory as a dataframe.  It then appends the raw data we extracted above to the empty "Data" section at the end of the template.   
+
+```{r templates}
+
+# function to add fluorescence data to plater template
+
+template_fun <- function(sheet, fluor_data){
+  
+  #load blank template
+  blnk_template <- read.csv("./empty_templates/blank_template_oxidative.csv",
+                            stringsAsFactors = FALSE,
+                            blank.lines.skip = FALSE)
+    
+  # set col names 
+  colnames(blnk_template) <- c("Template", "1", "2", "3", "4", "5",
+                             "6", "7", "8", "9", "10", "11", "12")
+  
+   #bind template and plate data, detecting if A Plate or B Plate template needed.
+  template <- rbind(blnk_template, fluor_data)
+   
+  #return completed template
+  return(template)
+}
+
+
+# create a sub-directory in your working directory called "auto-templates"
+# if you are running this script multiple times (testing/troubleshooting) you may see a warning that "auto-templates" directory already exists.  It's not a problem, every time you run this the sub-directory will be over-written. 
+
+dir.create("./auto_templates_oxidative/")
+
+# plater_templates col contains completed template dfs
+# export_paths col contains full path and file name for saving each completed template
+incl_templates <- fluor_import %>% 
+  mutate(plater_templates = map2(sheet,fluor_data, template_fun), 
+         export_paths = as.character(glue("./auto_templates_oxidative/plater-{sheet}.csv")))
+
+```
+
+
+# Save completed templates to a new sub-directory 
+
+Now that we have our completed templates in dataframe form, we need to write them to CSV files and save them for future analysis.  
+
+```{r save-data, message=FALSE}
+
+# function to save each template as a CSV using the specified export path
+save_templates_fun <- function(plater_templates, export_paths){
+  write.csv(plater_templates, export_paths, row.names = FALSE )
+}
+
+# write all templates to CSV, save in auto-templates sub-directory
+save_templates <- incl_templates %>% 
+  mutate(saved = walk2(plater_templates, export_paths, save_templates_fun))
+
+```
+
+# Initial quality control
+
+Now that you have one CSV file template saved for each plate, you should consult your lab notes and flag bad wells in the "Bad_wells" section of the appropriate template.  Additional quality control will be performed in the analysis script.  
+
+# Additional Improvements 
+
+- Add ideas for additional improvements to this script here. 
