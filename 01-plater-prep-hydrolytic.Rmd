@@ -1,13 +1,13 @@
 ---
 title: "Pre-Process Data from Plate Reader"
-subtitle: "Automating the creation of CSV templates for use with the plater package"
+subtitle: "Hydrolytic extracellular enzyme assays: Automating the creation of CSV templates for use with the plater package"
 author: "Hava Blair"
-date: "July 2, 2020"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
+  html_document: default
   pdf_document: 
     toc: true 
     number_sections: true
-  html_document: default
 ---
 \newpage
 
@@ -21,7 +21,7 @@ A pre-requisite for using the `plater` functions is getting your plate data in t
 
 ### Purpose of this R Markdown 
 
-If you have many plates worth of data to process, it can take some time and effort to manually create templates for each plate.  In my experience, the process of opening multiple excel files and copy / pasting the data was tedious and easy to mess up if I wasn't paying attention to my clipboard and file names. 
+If you have data from many plates to process, it can take some time and effort to manually create templates for each plate.  In my experience, the process of opening multiple excel files and copy / pasting the data was tedious and easy to mess up if I wasn't paying attention to my clipboard and file names. 
 
 **This script lends a hand by automating the process of preparing micorplate data stored in multiple excel files into the proper format for `plater` functions.**
 
@@ -52,7 +52,10 @@ library(glue)
 
 # Read in excel files 
 
-You can have as many sheets (tabs) as you want in each excel file.  Place all the excel files you want to process in the `raw_excel` sub-directory.  Do not place additional files in this sub-directory. 
+The `raw_excel_hydrolytic` subdirectory has some test data that you can use to play around with this script before you feed in your own data.  **Don't forget to delete the test files (or move them to a different folder) before you use this script for your own data.**
+
+You can have as many sheets (tabs) as you want in each excel file.  Place all the excel files you want to process in the `raw_excel_hydrolytic` sub-directory.  Do not place additional files in this sub-directory. 
+
 
 ```{r read}
 #fill in directory (folder) where your raw excel files are

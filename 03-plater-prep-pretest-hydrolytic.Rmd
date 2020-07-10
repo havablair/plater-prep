@@ -1,6 +1,6 @@
 ---
 title: "Pre-Process Data from Plate Reader"
-subtitle: "Oxidative extracellular enzyme assays: Automating the creation of CSV templates for use with the plater package"
+subtitle: "Pretest for hydrolytic extracellular enzyme assays: Automating the creation of CSV templates for use with the plater package"
 author: "Hava Blair"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
@@ -52,19 +52,19 @@ library(glue)
 
 # Read in excel files 
 
-The `raw_excel_oxidative` subdirectory has some test data that you can use to play around with this script before you feed in your own data.  **Don't forget to delete the test files (or move them to a different folder) before you use this script for your own data.**
+The `raw_excel_pretest` subdirectory has some test data that you can use to play around with this script before you feed in your own data.  **Don't forget to delete the test files (or move them to a different folder) before you use this script for your own data.**
 
-You can have as many sheets (tabs) as you want in each excel file.  Place all the excel files you want to process in the `raw_excel_oxidative` sub-directory.  Do not place additional files in this sub-directory. 
+You can have as many sheets (tabs) as you want in each excel file that you intend to process.  Place all the excel files you want to process in the `raw_excel_pretest` sub-directory.   Do not place additional files in this sub-directory. 
 
 ```{r read}
 #fill in directory (folder) where your raw excel files are
-xl_files <- dir("./raw_excel_oxidative/")
+xl_files <- dir("./raw_excel_pretest/")
 
 # save full file path to each of your excel files
-xl_paths <- paste0("./raw_excel_oxidative/", xl_files)
+xl_paths <- paste0("./raw_excel_pretest/", xl_files)
 
-# function to create dataframe with col for filepath and col for sheetnames. Each row in this dataframe represents a single "sheet" (tab) from your raw excel file. You will get one dataframe per excel file in your original list.
-# sheet col specified as "character" so bind_rows() below doesn't complain about unequal factor levels. 
+# function to create dataframe for file path and sheet name info. Each row in this dataframe represents a single "sheet" (tab) from one of your raw excel files. You will get one dataframe per excel file in your original list.
+# NOTE: 'sheet' col specified as "character" so bind_rows() below doesn't complain about unequal factor levels. 
 make_df <- function(file_path){
 df <- data.frame(sheet = excel_sheets(path = file_path))
 df$path = file_path
@@ -76,20 +76,24 @@ df
 # creates list of dfs
 sheets_list <- map(xl_paths, make_df)
 
+sheets_list
+
 ``` 
 
 
-# Create a dataframe of file paths and sheet names 
+# Create single dataframe of file paths and sheet names 
 
-We will build a simple dataframe.  Each row will contain the file paths for our excel files and sheet names for each sheet we want to turn into a plater template.  
+We will build a simple dataframe.  Each row will contain the file path to one of our excel files and a corresponding sheet name for each sheet we want to turn into a plater template.  
 
 ```{r file-sheet-list, message=FALSE}
 
 # bind list of dfs together into a single df:
-# path is first col, sheets second col
 sheets_path_df <- bind_rows(sheets_list) 
+# path should be first col, sheets second col
 sheets_path_df <- sheets_path_df %>% select(path, sheet)
 
+# peek at first few rows
+head(sheets_path_df)
 ```
 
 
@@ -102,7 +106,7 @@ The plate reader includes extra metadata and formatting junk in the exported wor
 
 read_sheets <- function(path, sheet){
   
-  raw_data <- read_excel(path = path, sheet = sheet, range = "B23:N31")
+  raw_data <- read_excel(path = path, sheet = sheet, range = "B26:N34")
   raw_data %>%  
     rename(Template = ...1) %>% 
     mutate(`1` = as.character(`1`),
@@ -127,7 +131,7 @@ fluor_import <- sheets_path_df %>%
 
 # Create plater templates
 
-This section of the code reads in a template from the empty_templates sub-directory as a dataframe.  It then appends the raw data we extracted above to the empty "Data" section at the end of the template.   
+This function reads in a template from the empty_templates sub-directory as a dataframe.  It then appends the raw data we extracted above to the empty "Data" section at the end of the template.   
 
 ```{r templates}
 
@@ -135,38 +139,55 @@ This section of the code reads in a template from the empty_templates sub-direct
 
 template_fun <- function(sheet, fluor_data){
   
-  #load blank template
-  blnk_template <- read.csv("./empty_templates/blank_template_oxidative.csv",
+  #load blank template for BG/Cello (bc) plates
+  blank_template_bc <- read.csv("./empty_templates/blank_template_pretest_bc.csv",
                             stringsAsFactors = FALSE,
                             blank.lines.skip = FALSE)
     
-  # set col names 
-  colnames(blnk_template) <- c("Template", "1", "2", "3", "4", "5",
+  # set col names BG/Cello (bc) plate template
+  colnames(blank_template_bc) <- c("Template", "1", "2", "3", "4", "5",
                              "6", "7", "8", "9", "10", "11", "12")
   
+  # load blank template for NAG/P (np) plates 
+  blank_template_np <- read.csv("./empty_templates/blank_template_pretest_np.csv", stringsAsFactors = FALSE, blank.lines.skip = FALSE)
+  
+  # set col names for NAG/P (np) plate template
+   colnames(blank_template_np) <- c("Template", "1", "2", "3", "4", "5",
+                             "6", "7", "8", "9", "10", "11", "12")
    #bind template and plate data, detecting if A Plate or B Plate template needed.
-  template <- rbind(blnk_template, fluor_data)
+  if (str_detect(sheet, "bc")){
+    template <- rbind(blank_template_bc, fluor_data)
+  }else{
+    template <- rbind(blank_template_np, fluor_data)
+  }
    
   #return completed template
   return(template)
 }
 
+```
 
-# create a sub-directory in your working directory called "auto-templates"
-# if you are running this script multiple times (testing/troubleshooting) you may see a warning that "auto-templates" directory already exists.  It's not a problem, every time you run this the sub-directory will be over-written. 
+# Create a folder (directory)
 
-dir.create("./auto_templates_oxidative/")
+Before we use the function above to fill out our `plater` templates, we want to create a place to save them.  The code below creates a folder (directory) within the current working directory (folder where you have saved this R project). 
+
+Note: If you are running this script multiple times (testing/troubleshooting) you may see a warning that "auto-templates" directory already exists.  It's not a problem, but note that every time you run this part of the script, the sub-directory and its contents will be over-written. 
+```{r}
+
+# create a folder (directory) called "auto-templates"
+
+dir.create("./auto_templates_pretest/")
 
 # plater_templates col contains completed template dfs
 # export_paths col contains full path and file name for saving each completed template
 incl_templates <- fluor_import %>% 
-  mutate(plater_templates = map2(sheet,fluor_data, template_fun), 
-         export_paths = as.character(glue("./auto_templates_oxidative/plater-{sheet}.csv")))
+  mutate(plater_templates = map2(sheet, fluor_data, template_fun), 
+         export_paths = as.character(glue("./auto_templates_pretest/plater-{sheet}.csv")))
 
 ```
 
 
-# Save completed templates to a new sub-directory 
+# Save completed templates as CSVs
 
 Now that we have our completed templates in dataframe form, we need to write them to CSV files and save them for future analysis.  
 
@@ -185,8 +206,9 @@ save_templates <- incl_templates %>%
 
 # Initial quality control
 
-Now that you have one CSV file template saved for each plate, you should consult your lab notes and flag bad wells in the "Bad_wells" section of the appropriate template.  Additional quality control will be performed in the analysis script.  
+Now that you have one CSV file template saved for each plate, you should consult your lab notes and flag bad wells in the "Bad_wells" section of the appropriate template with the word 'bad'.  Additional quality control will be performed in the analysis script.  
 
 # Additional Improvements 
 
-- Add ideas for additional improvements to this script here. 
+- figure out best way to deal with cells labelled "empty" in the template files, might need to add a line to the analysis script to drop these. Leaving the blank results in a bunch of NAs propagating down through the whole template when it is saved to CSV at end of script.  Not a huge problem, but not helpful either. 
+

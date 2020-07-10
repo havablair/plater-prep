@@ -10,7 +10,7 @@ A pre-requisite for using the `plater` functions is getting your plate data in t
 
 If you have many plates worth of data to process, it can take some time and effort to manually create templates for each plate.  In my experience, the process of opening multiple excel files and copy / pasting the data was tedious and easy to mess up if I wasn't paying attention to my clipboard and file names. 
 
-**This script lends a hand by automating the process of preparing micorplate data stored in multiple excel files into the proper format for `plater` functions.**
+**This script lends a hand by automating the process of preparing microplate data stored in multiple excel files into the proper format for `plater` functions.**
 
 The script was written to ingest an arbitrary number of excel files with multiple worksheets (tabs) in each file.  It will also work for files with only 1 worksheet.  
 
