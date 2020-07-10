@@ -8,7 +8,7 @@ A pre-requisite for using the `plater` functions is getting your plate data in t
 
 ## Purpose of this R Markdown 
 
-If you have many plates worth of data to process, it can take some time and effort to manually create templates for each plate.  In my experience, the process of opening multiple excel files and copy / pasting the data was tedious and easy to mess up if I wasn't paying attention to my clipboard and file names. 
+If you have data from many plates to process, it can take some time and effort to manually create templates for each plate.  In my experience, the process of opening multiple excel files and copy / pasting the data was tedious and easy to mess up if I wasn't paying attention to my clipboard and file names. 
 
 **This script lends a hand by automating the process of preparing microplate data stored in multiple excel files into the proper format for `plater` functions.**
 
@@ -16,7 +16,7 @@ The script was written to ingest an arbitrary number of excel files with multipl
 
 ## What you need 
 
-- Data exported from the plate reader software (this script assumes .xlsx). The name of each tab should be a plate number or identifier, and each one should be unique.  **Make sure that your "B" plate name includes the text "plate_b"**
+- Data exported from the plate reader software (this script assumes .xlsx). The name of each tab should be a plate number or identifier, and each one should be unique.  
 - Your plate layouts (map of sample names, blanks, checks on each plate)
 - Your lab notebook or notes with information about any known pipetting errors or plate issues that should be flagged for quality control ("Bad Wells")
 - A generic plate template.  Templates are available in the `empty_templates` sub-directory for the hydrolytic and oxidative extracellular enzyme assays regularly performed in the Gutknecht lab.  If you need to create your own template, see Step 1 in this tutorial for `plater`'s formatting requirements:  https://cran.r-project.org/web/packages/plater/vignettes/plater-basics.html
