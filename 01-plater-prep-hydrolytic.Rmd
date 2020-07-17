@@ -4,10 +4,10 @@ subtitle: "Hydrolytic extracellular enzyme assays: Automating the creation of CS
 author: "Hava Blair"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
-  html_document: default
   pdf_document: 
     toc: true 
     number_sections: true
+  html_document: default
 ---
 \newpage
 
@@ -47,6 +47,7 @@ knitr::opts_chunk$set(tidy.opts = list(width.cutoff=60))
 library(tidyverse)
 library(readxl)
 library(glue)
+library(plater)
 
 ```
 
@@ -138,15 +139,15 @@ template_fun <- function(sheet, fluor_data){
   
   #load blank template for A plates
   blnk_template_a <- read.csv("./empty_templates/blank_template_a_hydro.csv",
-                            stringsAsFactors = FALSE,
-                            blank.lines.skip = FALSE)
+                              blank.lines.skip = FALSE)
     
   # set col names A plate template
   colnames(blnk_template_a) <- c("Template", "1", "2", "3", "4", "5",
                              "6", "7", "8", "9", "10", "11", "12")
   
   # load blank template for B plates 
-  blnk_template_b <- read.csv("./empty_templates/blank_template_b_hydro.csv", stringsAsFactors = FALSE, blank.lines.skip = FALSE)
+  blnk_template_b <- read.csv("./empty_templates/blank_template_b_hydro.csv",
+                              blank.lines.skip = FALSE)
   
   # set col names B plate template
    colnames(blnk_template_b) <- c("Template", "1", "2", "3", "4", "5",
@@ -171,8 +172,10 @@ dir.create("./auto_templates_hydrolytic/")
 # plater_templates col contains completed template dfs
 # export_paths col contains full path and file name for saving each completed template
 incl_templates <- fluor_import %>% 
-  mutate(plater_templates = map2(sheet,fluor_data, template_fun), 
+  mutate(plater_templates = map2(sheet, fluor_data, template_fun), 
          export_paths = as.character(glue("./auto_templates_hydrolytic/plater-{sheet}.csv")))
+
+incl_templates$plater_templates
 
 ```
 
@@ -185,7 +188,7 @@ Now that we have our completed templates in dataframe form, we need to write the
 
 # function to save each template as a CSV using the specified export path
 save_templates_fun <- function(plater_templates, export_paths){
-  write.csv(plater_templates, export_paths, row.names = FALSE )
+  write_csv(plater_templates, export_paths, col_names = TRUE)
 }
 
 # write all templates to CSV, save in auto-templates sub-directory
@@ -201,4 +204,15 @@ Now that you have one CSV file template saved for each plate, you should consult
 # Additional Improvements 
 
 - figure out best way to deal with cells labelled "empty" in the template files, might need to add a line to the analysis script to drop these. Leaving the blank results in a bunch of NAs propagating down through the whole template.  Not harmful but not helpful either. 
+
+
+```{r read-test}
+
+test_dir <- dir("./auto_templates_hydrolytic/")
+
+test_paths <- paste0("./auto_templates_hydrolytic/", test_dir)
+
+read_plates(test_paths)
+
+```
 

@@ -47,6 +47,7 @@ knitr::opts_chunk$set(tidy.opts = list(width.cutoff=60))
 library(tidyverse)
 library(readxl)
 library(glue)
+library(plater)
 
 ```
 
@@ -195,7 +196,7 @@ Now that we have our completed templates in dataframe form, we need to write the
 
 # function to save each template as a CSV using the specified export path
 save_templates_fun <- function(plater_templates, export_paths){
-  write.csv(plater_templates, export_paths, row.names = FALSE )
+  write_csv(plater_templates, export_paths, col_names = TRUE)
 }
 
 # write all templates to CSV, save in auto-templates sub-directory
@@ -210,5 +211,15 @@ Now that you have one CSV file template saved for each plate, you should consult
 
 # Additional Improvements 
 
-- figure out best way to deal with cells labelled "empty" in the template files, might need to add a line to the analysis script to drop these. Leaving the blank results in a bunch of NAs propagating down through the whole template when it is saved to CSV at end of script.  Not a huge problem, but not helpful either. 
+
+```{r read-test}
+
+test_dir <- dir("./auto_templates_pretest/")
+
+test_paths <- paste0("./auto_templates_pretest/", test_dir)
+
+read_plates(test_paths)
+
+```
+
 
