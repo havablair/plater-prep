@@ -3,8 +3,8 @@ A,MUB2.5,MUB2.5,empty,empty,empty,empty,empty,empty,empty,empty,empty,Buf
 B,MUB2.5,MUB2.5,empty,empty,empty,empty,empty,empty,empty,empty,empty,Buf
 C,MUB1.25,MUB1.25,empty,empty,empty,empty,empty,empty,empty,empty,empty,Buf
 D,MUB1.25,MUB1.25,empty,empty,empty,empty,empty,empty,empty,empty,empty,Buf
-E,MUB0.625,MUB0.625,empty,empty,empty,empty,empty,empty,empty,empty,empty,Buf
-F,MUB0.625,MUB0.625,empty,empty,empty,empty,empty,empty,empty,empty,empty,Buf
+E,MUB0.63,MUB0.63,empty,empty,empty,empty,empty,empty,empty,empty,empty,Buf
+F,MUB0.63,MUB0.63,empty,empty,empty,empty,empty,empty,empty,empty,empty,Buf
 G,MUB0.16,MUB0.16,empty,empty,empty,empty,empty,empty,empty,empty,empty,Buf
 H,MUB0.16,MUB0.16,empty,empty,empty,empty,empty,empty,empty,empty,empty,Buf
 ,,,,,,,,,,,,
@@ -23,8 +23,8 @@ A,mub_2.5,mub_2.5,,,,,,,,,,
 B,mub_2.5,mub_2.5,,,,,,,,,,
 C,mub_1.25,mub_1.25,,,,,,,,,,
 D,mub_1.25,mub_1.25,,,,,,,,,,
-E,mub_0.625,mub_0.625,,,,,,,,,,
-F,mub_0.625,mub_0.625,,,,,,,,,,
+E,mub_0.63,mub_0.63,,,,,,,,,,
+F,mub_0.63,mub_0.63,,,,,,,,,,
 G,mub_0.16,mub_0.16,,,,,,,,,,
 H,mub_0.16,mub_0.16,,,,,,,,,,
 ,,,,,,,,,,,,
