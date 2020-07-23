@@ -173,7 +173,7 @@ dir.create("./auto_templates_hydrolytic/")
 # export_paths col contains full path and file name for saving each completed template
 incl_templates <- fluor_import %>% 
   mutate(plater_templates = map2(sheet, fluor_data, template_fun), 
-         export_paths = as.character(glue("./auto_templates_hydrolytic/plater-{sheet}.csv")))
+         export_paths = as.character(glue("./auto_templates_hydrolytic/{sheet}.csv")))
 
 incl_templates$plater_templates
 
@@ -201,10 +201,9 @@ save_templates <- incl_templates %>%
 
 Now that you have one CSV file template saved for each plate, you should consult your lab notes and flag bad wells in the "Bad_wells" section of the appropriate template.  Additional quality control will be performed in the analysis script.  
 
-# Additional Improvements 
+# Test 
 
-- figure out best way to deal with cells labelled "empty" in the template files, might need to add a line to the analysis script to drop these. Leaving the blank results in a bunch of NAs propagating down through the whole template.  Not harmful but not helpful either. 
-
+See if the `plater` function `read_plates()` will work with the templates you just created 
 
 ```{r read-test}
 

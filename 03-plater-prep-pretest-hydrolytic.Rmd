@@ -183,7 +183,7 @@ dir.create("./auto_templates_pretest/")
 # export_paths col contains full path and file name for saving each completed template
 incl_templates <- fluor_import %>% 
   mutate(plater_templates = map2(sheet, fluor_data, template_fun), 
-         export_paths = as.character(glue("./auto_templates_pretest/plater-{sheet}.csv")))
+         export_paths = as.character(glue("./auto_templates_pretest/{sheet}.csv")))
 
 ```
 
